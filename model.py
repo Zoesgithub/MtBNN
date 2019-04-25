@@ -55,12 +55,7 @@ class model(object):
         self.scalev=0.001
         self.embedsize=100
         self.lr=lr
-        if calsnp:
-            trainable=True
-            trainable1=False
-        else:
-            trainable=True
-            trainable1=True
+        trainable=True
         self.iter=tf.Variable(0, trainable=False)
         self.n_task=n_task
         initializer=tf.orthogonal_initializer()
@@ -70,9 +65,6 @@ class model(object):
         self.task=tf.placeholder(tf.int32, [None], name='task')
 
         self.emb=tf.get_variable(name='emb', shape=[4, self.embedsize], trainable=trainable)
-        #self.alphaw1=self.addv([100,256], name='alphaw1', initializer=initializer, trainable=trainable)
-        #self.alphaw2=self.addv([256,256], name='alphaw2', initializer=initializer, trainable=trainable)
-        #self.alphaw3=self.addv([256,100], name='alphaw3', initializer=initializer, trainable=trainable)
         self.dense1=tf.layers.Dense(256, activation=tf.nn.relu, trainable=trainable)
         self.dense2=tf.layers.Dense(256, activation=tf.nn.relu, trainable=trainable)
         self.dense3=tf.layers.Dense(100, activation=tf.nn.sigmoid, trainable=trainable)
@@ -82,16 +74,16 @@ class model(object):
         def addalpha(shape, name, initializer, trainable):            
             w=self.addv(shape, name, initializer, trainable)
             
-            w=self.dense1(w)#tf.nn.relu(tf.matmul(w, self.alphaw1))
-            w=self.dense2(w)#tf.nn.relu(tf.matmul(w, self.alphaw2))
-            w=self.dense3(w)#tf.nn.sigmoid(tf.matmul(w, self.alphaw3))#self.dense3(w)
+            w=self.dense1(w)
+            w=self.dense2(w)
+            w=self.dense3(w)
             return w
 
 
 
 
         self.z=addalpha([self.n_task,100], "selfz", initializer=tf.constant_initializer(random.random()),
-                        trainable=trainable) #for i in range(self.n_task)]
+                        trainable=trainable) 
         self.z=tf.concat([self.z, tf.ones([1,100], dtype=tf.float32)],0)
         self.w1=self.addv(name='w1', shape=[10, 100, 1, 512], 
                                 initializer=initializer, trainable=trainable)
@@ -111,9 +103,9 @@ class model(object):
                                 initializer=initializer, trainable=trainable)
 
         with tf.variable_scope("pos/p"):
-            self.rnncell=BRNN(256, inputsize=128+256, dictin=self.diction,trainable=trainable)#tf.nn.rnn_cell.GRUCell(256)
+            self.rnncell=BRNN(256, inputsize=128+256, dictin=self.diction,trainable=trainable)
         with tf.variable_scope('pos/r'):
-            self.rnncellb=BRNN(256, inputsize=128+256,dictin=self.diction, trainable=trainable)#tf.nn.rnn_cell.GRUCell(256)
+            self.rnncellb=BRNN(256, inputsize=128+256,dictin=self.diction, trainable=trainable)
       
         self.optimizer=tf.train.AdamOptimizer(lr)
         self.scaldict={item:0.0001 for item in self.diction}
@@ -121,9 +113,6 @@ class model(object):
 
     def net(self, inputs, calsnp=False):
         netinput=tf.expand_dims(tf.nn.embedding_lookup(self.emb, inputs), -1)
-        #onehot=tf.expand_dims(tf.one_hot(inputs, depth=4), -1)
-        #print onehot
-        #netinput=tf.concat([netinput, onehot],2)
         output=self.cnnnet(netinput,  calsnp)
         result=tf.nn.relu(tf.matmul(output, self.w10))
         result=tf.nn.relu(tf.matmul(result, self.w11))
@@ -144,7 +133,6 @@ class model(object):
             fineinput_=tf.reshape(fineinput_,[n*(self.n_task+1), 100])
             fineinput_=tf.matmul(fineinput_, self.w12)
             fineinput_=tf.reshape(fineinput_, [n,self.n_task+1])
-            #fineinput_=tf.concat([fineinput_, fineinput],1)
         else:
             print "####################USING BACKGROUND INFORMATION###############"
             fineinput_=fineinput
@@ -152,13 +140,13 @@ class model(object):
             p=tf.concat([ fineinput_[:n/2],fineinput_[n/2:], fineinput_[:n/2]-fineinput_[n/2:],
                           fineinput_[n/2:]-fineinput_[:n/2]],1)
             p=tf.layers.batch_normalization(p)
-            p=tf.layers.dense(p, 1024, activation=tf.nn.relu)#tf.nn.relu(tf.matmul(p,w4))
+            p=tf.layers.dense(p, 1024, activation=tf.nn.relu)
             p=tf.layers.batch_normalization(p)
-            p=tf.layers.dense(p, 512, activation=tf.nn.relu)#tf.nn.relu(tf.matmul(p,w4))
+            p=tf.layers.dense(p, 512, activation=tf.nn.relu)
             p=tf.layers.batch_normalization(p)
-            p=tf.layers.dense(p, 256, activation=tf.nn.relu)#tf.nn.relu(tf.matmul(p,w4))
+            p=tf.layers.dense(p, 256, activation=tf.nn.relu)
             p=tf.layers.batch_normalization(p)
-            p=tf.layers.dense(p, 128, activation=tf.nn.relu)#tf.nn.relu(tf.matmul(p,w4))
+            p=tf.layers.dense(p, 128, activation=tf.nn.relu)
             p=tf.layers.batch_normalization(p)
             res=tf.layers.dense(p, 1)
             res=tf.reduce_sum(tf.layers.batch_normalization((res)),1)
@@ -192,7 +180,7 @@ class model(object):
         at=self.dense5(self.dense4(tf.concat(o,2)))
         at=at*tf.concat(o, 2)
         at=tf.expand_dims(tf.nn.softmax(tf.reduce_sum(at, 2),1),2)
-        output=tf.reduce_sum(tf.concat(o, 2)*at,1)#tf.concat(state,1)
+        output=tf.reduce_sum(tf.concat(o, 2)*at,1)#
         self.cnnoutput=output
         return output
 
@@ -211,12 +199,6 @@ class model(object):
         return res
 
 
-    def calcg(self, seq):
-        res=0
-        for item in seq:
-            if item==1 or item ==2:
-                res+=1
-        return res
     def train(self, traindata,  iteration, batch_size, traindir, save_step=50, random_neg=True):
         import time
         start=time.time()
@@ -227,10 +209,9 @@ class model(object):
         lossvalue=Bernoulli(logits=lossvalue)
         resultv=tf.zeros(tf.shape(lossvalue), dtype=tf.int32)
         inference=ed.ReparameterizationKLKLqp(self.diction, data={lossvalue:resultv })
-
         random.shuffle(traindata)
         self.sess=ed.get_session()
-        inference.initialize(n_samples=1, optimizer=self.optimizer, n_iter=5000, logdir="/home/xuchencheng/Data/BNN/log",
+        inference.initialize(n_samples=1, optimizer=self.optimizer, n_iter=5000, logdir="./log",
                              kl_scaling=self.scaldict)
         saver=tf.train.Saver(max_to_keep=500)
         self.sess.run(tf.global_variables_initializer())
@@ -243,20 +224,9 @@ class model(object):
 
         trainneg_=[[item for item in jtem if item[-1]<1] for jtem in traindata]
         negset={}
-        print "##################################"
-        print len(trainneg_)
-        print len(traindata)
-        print "##################################"
 
         trainpos=[[item for item in jtem if item[-1]>0] for jtem in traindata]
         negset=[[item for item in jtem if item[-1]<1] for jtem in traindata]
-        print "negdatasize", len(negset)
-        if random_neg:
-            print "################using random neg##########################"
-        else:
-            print "################not use random neg########################"
-        if not random_neg:
-            self.lr=5e-5
         sys.stdout.flush()
         for i in range(iteration):
             trainseq=[]
@@ -286,13 +256,13 @@ class model(object):
                 saver.save(self.sess, traindir+'model.ckpt', global_step=iterr)
                 end=time.time()
                 end_c=time.clock()
-                print "time           ", end-start, end_c-start_c
+                print "ITER %d TIME %f SAVING MODEL" %(iterr, end-start)
                 sys.stdout.flush()
 
     def test(self,testdata,load_path,i,batchsize=400, n_samples=100):
         results=self.net(self.inputs, i)
-        results=tf.matmul(results, self.w12)#,0) for item in self.result],0)
-        sess=self.sess#tf.Session()
+        results=tf.matmul(results, self.w12)#
+        sess=self.sess#
         if i==0:
             collection=[item for item in tf.all_variables() if 'ww' not in item.name]
             saver=tf.train.Saver()
@@ -327,14 +297,13 @@ class model(object):
         startt=time.time()
         startc=time.clock()
         sess=ed.get_session()
-        #self.cnnoutput=None
         result=self.net(self.inputs, calsnp=True)
         fine_tune=self.fine_tune(result, self.cnnoutput, task)
 
 
         fine_tune_=Bernoulli(logits=(fine_tune))
         inference=ed.ReparameterizationKLKLqp(self.diction, data={fine_tune_:tf.reshape(tf.cast(self.y, tf.int32),[-1])})
-        inference.initialize(n_samples=1, optimizer=self.optimizer, n_iter=5000,logdir="/home/xuchencheng/Data/BNN/log/snplist/",
+        inference.initialize(n_samples=1, optimizer=self.optimizer, n_iter=5000,
                              kl_scaling=self.scaldict)
         y_copy=ed.copy(fine_tune,self.diction) 
         collection=[item for item in tf.all_variables() if 'ww' not in item.name]
@@ -343,9 +312,7 @@ class model(object):
         n=len(testdata)
         result=[]
         pos=[item for item in testdata if item[-1]>0]
-        print len(pos)
         neg=[item for item in testdata if item[-1]<1]
-        print len(neg)
         b=len(neg)/len(pos)
         n1=len(pos)/5
         n2=len(neg)/5
@@ -355,54 +322,51 @@ class model(object):
         elif task>self.n_task:
             task=self.n_task+1
         test=testdata
-        for i in range(1):
-            sess.run(tf.global_variables_initializer())
-            saver=tf.train.Saver(collection)
-            saver.restore(sess, load_path)
-            random.shuffle(train)
-            #print train[:10]
-            #test=post[i]+negt[i]
-            for k in range(len(train)*15/150+1):
-                klist=self.random_sample(len(train),150)
-                temptrain=[train[w] for w in klist]
-                trainseq=[]
-                trainseq=[item[0] for item in temptrain]+[item[1] for item in temptrain]
-                traintag=[max(item[-1],0) for item in temptrain]
-                ttask=[task for item in trainseq]
-                info_dict=inference.update({self.inputs:trainseq, self.y:traintag, self.task:ttask})
+        print "START FINE-TUNING"
+        sess.run(tf.global_variables_initializer())
+        saver=tf.train.Saver(collection)
+        saver.restore(sess, load_path)
+        random.shuffle(train)
+        for k in range(len(train)*15/150+1):
+            klist=self.random_sample(len(train),150)
+            temptrain=[train[w] for w in klist]
+            trainseq=[]
+            trainseq=[item[0] for item in temptrain]+[item[1] for item in temptrain]
+            traintag=[max(item[-1],0) for item in temptrain]
+            ttask=[task for item in trainseq]
+            info_dict=inference.update({self.inputs:trainseq, self.y:traintag, self.task:ttask})
 
-                trainseq=[item[1] for item in temptrain]+[item[0] for item in temptrain]
-                traintag=[max(item[-1],0) for item in temptrain]
-                ttask=[task for item in trainseq]
-                info_dict=inference.update({self.inputs:trainseq, self.y:traintag, self.task:ttask})
-                saver=tf.train.Saver()
-                if traindir is not None and k%200==0:
-                    iterr=sess.run(self.iter)
-                    sess.run(tf.assign(self.iter, iterr+1+i*5+1))
-                    saver.save(sess, traindir+'model.ckpt', global_step=iterr)
-            tempn=len(test)
-            tw=0
-            while (tw<tempn):
-                temp=test[tw:tw+150]
-                inputs=[]
-                inputs=[item[0] for item in temp]+[item[1] for item in temp]
-                label=[item[-1] for item in temp]
-                ttask=[task for item in inputs]
-                pred=np.array([sess.run(y_copy, {self.inputs:inputs, self.task:ttask}) for i in range(n_sample1)])
+            trainseq=[item[1] for item in temptrain]+[item[0] for item in temptrain]
+            traintag=[max(item[-1],0) for item in temptrain]
+            ttask=[task for item in trainseq]
+            info_dict=inference.update({self.inputs:trainseq, self.y:traintag, self.task:ttask})
+            saver=tf.train.Saver()
+            if traindir is not None and k%200==0:
+                iterr=sess.run(self.iter)
+                sess.run(tf.assign(self.iter, iterr+1+i*5+1))
+                saver.save(sess, traindir+'model.ckpt', global_step=iterr)
+        tempn=len(test)
+        tw=0
+        while (tw<tempn):
+            temp=test[tw:tw+150]
+            inputs=[]
+            inputs=[item[0] for item in temp]+[item[1] for item in temp]
+            label=[item[-1] for item in temp]
+            ttask=[task for item in inputs]
+            pred=np.array([sess.run(y_copy, {self.inputs:inputs, self.task:ttask}) for i in range(n_sample1)])
 
-                mean=np.mean(pred,0).tolist()
-                var=np.var(pred,0).tolist()
-                res.extend([[v1,v2,v3] for v1,v2,v3 in zip(mean, var, label)]  )
-                del pred
-                del mean
-                del var
-                tw+=150
-            endt=time.time()
-            endc=time.clock()
-            print "time############", endt-startt, endc-startc
-            r=[(item[0]) for item in res]
-            l=[item[-1] for item in res]
-            fpr, tpr, t=roc_curve(l,r,pos_label=1)
-            print auc(fpr, tpr)
-            sys.stdout.flush()
+            mean=np.mean(pred,0).tolist()
+            var=np.var(pred,0).tolist()
+            res.extend([[v1,v2,v3] for v1,v2,v3 in zip(mean, var, label)]  )
+            del pred
+            del mean
+            del var
+            tw+=150
+        endt=time.time()
+        endc=time.clock()
+        r=[(item[0]) for item in res]
+        l=[item[-1] for item in res]
+        fpr, tpr, t=roc_curve(l,r,pos_label=1)
+        print "RUNNING TIME %f, AUC %f" %(endt-startt, auc(fpr, tpr))
+        sys.stdout.flush()
         return res
