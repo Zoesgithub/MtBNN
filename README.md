@@ -1,6 +1,13 @@
 # MtBNN
 The python script for MtBNN
-
+##requirement
+Python 2.7.14
+tensorflow-gpu==1.4.0
+edward==1.3.5
+numpy==1.14.5
+scipy==1.1.0
+scikit-learn==0.20.0
+keras==2.1.3
 ## Train model
 python main.py -r TRAINDATALIST -s MODELSAVEDIR 
 
