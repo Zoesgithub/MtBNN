@@ -1,23 +1,23 @@
 # MtBNN
-The python script for MtBNN. The help information can be obtain by:
+The python script for MtBNN. The help information can be obtain by
 
     python main.py -h
 
-Some toy data are given in *testdata*
+Some toy data are given in *testdata* folder.
 
 ## requirement
-Python 2.7.14
-tensorflow-gpu==1.4.0
-edward==1.3.5
-numpy==1.14.5
-scipy==1.1.0
-scikit-learn==0.20.0
-keras==2.1.3
+Python 2.7.14\\
+tensorflow-gpu==1.4.0\\
+edward==1.3.5\\
+numpy==1.14.5\\
+scipy==1.1.0\\
+scikit-learn==0.20.0\\
+keras==2.1.3\\
 
 ## Train model
 example:
 
-    <?bash python main.py -r train1 train2 -s ./Model ?>
+    bash python main.py -r train1 train2 -s ./Model
 
 Multiple training data can be used here.
 
