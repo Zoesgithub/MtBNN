@@ -253,7 +253,7 @@ class model(object):
 
             iterr=self.sess.run(self.iter)
             self.sess.run(tf.assign(self.iter, iterr+1))
-            if iterr%save_step==0:
+            if iterr%save_step==0 or iterr==iteration-1:
                 saver.save(self.sess, os.path.join(traindir,'model.ckpt'), global_step=iterr)
                 end=time.time()
                 end_c=time.clock()
