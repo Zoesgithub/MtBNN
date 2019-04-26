@@ -41,6 +41,10 @@ example:
 
     python main.py -t testdata/snp_train testdata/snp_test -n True -a 1 -k 2 -p ./Model/model.ckpt-0
 
-In the snp mode, the number of tasks and the index of task must be specified, i.e. the value of k (the number of tasks used in the training process) and the value of a (the index of the task which the snp data is related to) are needed.
+    if a==k, MtBNN_ALL will be calculated
+    if a<k, MtBNN_SINGLE will be calculated with *a*th task-specific feature
+    if a==k+1, MtBNN_GENERIC will be calculted
+
+a==k is suggested. In the snp mode, the number of tasks and the index of task must be specified, i.e. the value of k (the number of tasks used in the training process) and the value of a (the index of the task which the snp data is related to) are needed.
 
 The output will be saved with a suffix of *MtBNN_snp_out*
