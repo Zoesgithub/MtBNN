@@ -3,7 +3,7 @@ The python script for MtBNN. The help information can be obtain by
 
     python main.py -h
 
-Some toy data are given in *testdata* folder.
+Some toy data are given in *testdata* folder. The format of input files should be the same as these toy examples.
 
 ## requirement
 Python 2.7.14
@@ -23,14 +23,14 @@ keras==2.1.3
 ## Train model
 example:
 
-    bash python main.py -r train1 train2 -s ./Model
+    bash python main.py -r testdata/train1 testdata/train2 -s ./Model
 
-Multiple training data can be used here.
+Multiple training data can be used here. Each training data is in the json format.
 
 ## Test model
 example:
 
-    python main.py -t test1 test2 -p ./Model/model.ckpt-0 -k 2
+    python main.py -t testdata/test1 testdata/test2 -p ./Model/model.ckpt-0 -k 2
 
 In the testing mode, the number of tasks used in the training process must be specified, i.e. the value of k must be given. The order of tasks in the testdata must be the same as that in the traindata.
 
@@ -39,7 +39,7 @@ The test result will be saved with a suffix of *MtBNN_test_out*
 ## Fine-tuning and validation on SNP data
 example:
 
-    python main.py -t snp_train snp_test -n True -a 1 -k 2 -p ./Model/model.ckpt-0
+    python main.py -t testdata/snp_train testdata/snp_test -n True -a 1 -k 2 -p ./Model/model.ckpt-0
 
 In the snp mode, the number of tasks and the index of task must be specified, i.e. the value of k (the number of tasks used in the training process) and the value of a (the index of the task which the snp data is related to) are needed.
 

@@ -10,6 +10,7 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.core import Dense, Dropout, Reshape
 from keras.layers.pooling import GlobalAveragePooling2D
 from keras.layers.normalization import BatchNormalization
+import os
 
 
 class BRNN(tf.nn.rnn_cell.GRUCell):
@@ -253,7 +254,7 @@ class model(object):
             iterr=self.sess.run(self.iter)
             self.sess.run(tf.assign(self.iter, iterr+1))
             if iterr%save_step==0:
-                saver.save(self.sess, traindir+'model.ckpt', global_step=iterr)
+                saver.save(self.sess, os.path.join(traindir,'model.ckpt'), global_step=iterr)
                 end=time.time()
                 end_c=time.clock()
                 print "ITER %d TIME %f SAVING MODEL" %(iterr, end-start)
@@ -290,9 +291,6 @@ class model(object):
 
     def calSNP(self,train, testdata, load_path, n_sample1=100, traindir=None, task=None):
         from sklearn.metrics import *
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
         import time
         startt=time.time()
         startc=time.clock()

@@ -7,17 +7,17 @@ import tensorflow as tf
 from sklearn.metrics import *
 
 parser=argparse.ArgumentParser()
-parser.add_argument("-t",'--test', nargs='*', help="the path to test file", default=None)
-parser.add_argument("-s", "--save", help="the path to save models", default=None)
-parser.add_argument("-r","--train", nargs='*', help='the path to train file', default=None)
-parser.add_argument('-n','--snp', help='whether to calculate snp', type=bool, default=False)
-parser.add_argument("-a", "--tasknum", help="The task tag of related data", type=int)
+parser.add_argument("-t",'--test', nargs='*', help="The path to test file, with the same order of train file. Multiple files can be given.", default=None)
+parser.add_argument("-s", "--save", help="The path to save models.", default=None)
+parser.add_argument("-r","--train", nargs='*', help='The path to train file. Multiple files can be given.', default=None)
+parser.add_argument('-n','--snp', help='Whether to calculate snp. Default: False.', type=bool, default=False)
+parser.add_argument("-a", "--tasknum", help="The index of task in snp mode.", type=int)
 parser.add_argument("-k", "--n_task", help="The number of tasks. This value must be specified in the test and snp mode", type=int, default=21)
-parser.add_argument("-p", "--loadpath", help="path to load model, the default is None", default=None)
-parser.add_argument("-e", "--step", help="number of training steps", default=6500*10)
+parser.add_argument("-p", "--loadpath", help="The path to load model", default=None)
+parser.add_argument("-e", "--step", help="Number of training steps", default=6500*10, type=int)
+parser.add_argument("-b", "--batchsize", help="Batchsize", type=int, default=400)
 
 args=parser.parse_args()
-
 def parse_data(data):
     diction={'a':0, 'c':1, 'g':2, 't':3}
     data=data.lower()
@@ -45,7 +45,7 @@ TESTLIST=args.test
 if FILELIST is not None:
     Model=model(len(FILELIST), lr=0.1e-4)
     traindata=loaddata(FILELIST, size=1000, snp=False)
-    b=200*2/len(FILELIST)
+    b=args.batchsize/len(FILELIST)
 
     Model.train(traindata, args.step, b, args.save, save_step=500, random_neg=True)
 else:
@@ -68,7 +68,7 @@ if args.snp:
     print auc(fpr, tpr)
     with open('MBNN_snp_output',"w") as f:
         f.write(json.dumps(res))
-else:
+elif args.test is not None:
     for i,item in zip(range(len(testdata)),testdata):
         res=Model.test(testdata[i],  args.loadpath,i)
         r=[item[0] for item in res]
@@ -76,5 +76,5 @@ else:
         fpr, tpr, t=roc_curve(l, r, pos_label=1)
         auc_=auc(fpr, tpr)
         print auc_
-        with open(TESTLIST[i]+'MBNN_test_out'+args.file, 'w') as f:
+        with open(TESTLIST[i]+'MBNN_test_out', 'w') as f:
             f.write(json.dumps(res))
