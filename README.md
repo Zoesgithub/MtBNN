@@ -14,7 +14,7 @@ The python script for MtBNN. The objective function of MtBNN is the ELBO
 \nonumber
 &amp;=&amp; -\sum_i \mathbb{E}_{q(z_i)} \log \frac{q(z_i)} {p(D_i|W_i)p(z_i)}- \mathbb{E}_{q(\alpha) } \log \frac{q(\alpha)}{p(\alpha)}\\&amp;=&amp;-\sum_i \textrm{ELBO}_i-\mathbb{E}_{q(\alpha)}\log \frac{q(\alpha)}{p(\alpha)}" />  
 
-The help information can be obtain by
+The task-dependent part is <img align="center" src="https://i.upmath.me/svg/%0A-%5Csum_i%20%5Ctextrm%7BELBO%7D_i%0A" alt="-\sum_i \textrm{ELBO}_i" /> and the task-commom part is <img align="center" src="https://i.upmath.me/svg/%0A-%5Cmathbb%7BE%7D_%7Bq(%5Calpha)%7D%5Clog%20%5Cfrac%7Bq(%5Calpha)%7D%7Bp(%5Calpha)%7D%0A" alt="-\mathbb{E}_{q(\alpha)}\log \frac{q(\alpha)}{p(\alpha)}" />. The help information can be obtain by
 
     python main.py -h
 
