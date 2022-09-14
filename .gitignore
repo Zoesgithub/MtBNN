@@ -3,3 +3,4 @@ temp/
 chr*
 task*
 *pycache*
+log/
