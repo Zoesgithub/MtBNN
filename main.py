@@ -1,80 +1,92 @@
-from model import model
-import argparse 
-import json
-import random
+from loguru import logger
 import os
-import tensorflow as tf
-from sklearn.metrics import *
+import argparse
+import importlib
+import random
+import numpy as np
+from utils import DataGenerator, MutGenerator, GetSummaryStatisticsCallback, writeFile
+import torch
+from torch.utils.data import DataLoader
 
-parser=argparse.ArgumentParser()
-parser.add_argument("-t",'--test', nargs='*', help="The path to test file, with the same order of train file. Multiple files can be given.", default=None)
-parser.add_argument("-s", "--save", help="The path to save models.", default=None)
-parser.add_argument("-r","--train", nargs='*', help='The path to train file. Multiple files can be given.', default=None)
-parser.add_argument('-n','--snp', help='Whether to calculate snp. Default: False.', type=bool, default=False)
-parser.add_argument("-a", "--tasknum", help="The index of task in snp mode.", type=int)
-parser.add_argument("-k", "--n_task", help="The number of tasks. This value must be specified in the test and snp mode", type=int, default=21)
-parser.add_argument("-p", "--loadpath", help="The path to load model", default=None)
-parser.add_argument("-e", "--step", help="Number of training steps", default=6500*10, type=int)
-parser.add_argument("-b", "--batchsize", help="Batchsize", type=int, default=400)
 
-args=parser.parse_args()
-def parse_data(data):
-    diction={'a':0, 'c':1, 'g':2, 't':3}
-    data=data.lower()
-    try:
-        return [diction[i] for i in data]
-    except:
-        return None
+def main():
 
-def loaddata(FILELIST,size=1000, snp=False):
-    res=[]
-    for FILE in FILELIST:
-        with open(FILE, 'r') as f:
-            content=json.load(f)
+    # load config file
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", help="the path to the config file")
+    args = parser.parse_args()
+    config_path = args.config.replace("/", ".")
+    config = importlib.import_module(config_path)
+    config = config.config
+    logger.add(config.log_path)
 
-        if snp:
-            content=[[item[0].lower(), item[1].lower(),item[2], item[-1]] for item in content]
-            res.append([[parse_data(item[0]), parse_data(item[1]),item[2], item[-1]] for item  in content 
-                if len(item[0])==len(item[1])and len(item[0])==size and parse_data(item[0])!=None and parse_data(item[1])!=None]) 
-        else:
-            res.append([[parse_data(item['seq']), item['label']] for item in content if len(item['seq'])==size])
-    return res
+    # set seeds
+    os.environ["PYTHONHASHSEED"] = str(1+config.seed)
+    os.environ["TF_DETERMINISTIC_OPS"] = "1"
+    random.seed(1+config.seed)
+    np.random.seed(1+config.seed)
+    torch.random.manual_seed(1+config.seed)
+    print("finish set env")
 
-FILELIST=args.train
-TESTLIST=args.test
-if FILELIST is not None:
-    Model=model(len(FILELIST), lr=0.1e-4)
-    traindata=loaddata(FILELIST, size=1000, snp=False)
-    b=args.batchsize/len(FILELIST)
+    if config.state=="pretrain":
+        # prepare model
+        train_data = DataLoader(DataGenerator(taskList=config.tasklist, path=config.path, endfix="_train"),
+                                shuffle=True, batch_size=config.batch_size, num_workers=0, drop_last=True)
+        validation_data = DataLoader(DataGenerator(taskList=config.tasklist, path=config.path, endfix="_valid"), shuffle=False,
+                                     batch_size=config.batch_size, num_workers=0, drop_last=True)
+        test_data = DataLoader(DataGenerator(taskList=config.tasklist, path=config.path, endfix="_test"), shuffle=False,
+                                     batch_size=config.batch_size, num_workers=0, drop_last=True)
 
-    Model.train(traindata, args.step, b, args.save, save_step=500, random_neg=True)
-else:
-    print "#############LOAD EXISTING MODEL##############"
-    Model=model(args.n_task, calsnp=args.snp, lr=1e-4)
 
-if TESTLIST is not None:
-    testdata=loaddata(TESTLIST, size=1000, snp=args.snp)
 
-if args.snp:
-    train=[]
-    print len(testdata)
-    for item in testdata[:-1]:
-        train+=item
-    res=Model.calSNP(train, testdata[-1], args.loadpath, task=args.tasknum)
-    r=[abs(item[0]) for item in res]
-    l=[item[-1] for item in res]
-    res=[[res[i], testdata[-1][i][2]] for i in range(len(res))]
-    fpr, tpr, t=roc_curve(l,r,pos_label=1)
-    print auc(fpr, tpr)
-    with open('MBNN_snp_output',"w") as f:
-        f.write(json.dumps(res))
-elif args.test is not None:
-    for i,item in zip(range(len(testdata)),testdata):
-        res=Model.test(testdata[i],  args.loadpath,i)
-        r=[item[0] for item in res]
-        l=[item[-1] for item in res]
-        fpr, tpr, t=roc_curve(l, r, pos_label=1)
-        auc_=auc(fpr, tpr)
-        print auc_
-        with open(TESTLIST[i]+'MBNN_test_out', 'w') as f:
-            f.write(json.dumps(res))
+        summary = GetSummaryStatisticsCallback(
+            config.model,
+            train_data, validation_data, test_data=test_data,
+            model_save_path=os.path.join(config.save_path, "models"),
+            ispretrain=True
+        )
+
+        logger.info("Finish loading data ...")
+        logger.info(
+            "Train data size {} validation data size {} test data size {}".format(len(train_data), len(validation_data),
+                                                                                  len(test_data)))
+
+        summary.fit(config.epoch_num)
+        logger.info("Finish training, start eval ...")
+        writeFile(config.model.eval(validation_data), os.path.join(config.save_path, "valid_"))
+        writeFile(config.model.eval(test_data), os.path.join(config.save_path, "test_"))
+        return
+
+    elif config.state=="cv": ## five-fold cross validation
+        # load model
+        mut_data = MutGenerator(config.trainjsonfile, config.taskname, config.tasklist)
+        summary = GetSummaryStatisticsCallback(
+            config.model,
+            None, None, test_data=None,
+            model_save_path=os.path.join(config.save_path, "models"),
+            ispretrain=False
+        )
+        summary.cross_validation(config.epoch_num, mut_data, config.batch_size, config.load_path, num_fold=5)
+
+    elif config.state=="ft": ## fine tuning
+        mut_data = MutGenerator(config.trainjsonfile, config.taskname, config.tasklist)
+        summary = GetSummaryStatisticsCallback(
+            config.model,
+            None, None, test_data=None,
+            model_save_path=os.path.join(config.save_path, "models"),
+            ispretrain=config.pretrain
+        )
+        summary.fine_tuning(config.epoch_num, mut_data, config.batch_size, config.load_path, num_fold=5)
+    elif config.state=="evmut": ## eval mutations
+        mut_data = DataLoader(MutGenerator(config.trainjsonfile, config.taskname, config.tasklist), batch_size=config.batch_size)
+        config.model.load_state_dict(torch.load(config.load_path))
+        writeFile(config.model.eval(mut_data, ismut=True), os.path.join(config.savepath, config.trainjsonfile.split("/")[-1]+"eval"))
+    else:
+        assert False, "state must in [evmut, cv, ft, pretrain]"
+
+
+
+
+
+if __name__ == "__main__":
+    main()
