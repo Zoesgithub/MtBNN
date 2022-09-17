@@ -12,54 +12,36 @@ The python script for MtBNN. The objective function of MtBNN is the ELBO
 \nonumber
 &amp;=&amp; \log p(\bm{D})-\sum_i \mathbb{E}_{q} \log \frac{ q(W_i|z_i,\alpha)q(z_i)} {p(D_i|W_i)p(W_i|z_i,\alpha)p(z_i)}-\mathbb{E}_{q(\alpha) } \log \frac{q(\alpha)p(\bm{D}|\alpha)}{p(\alpha|\bm{D})} \\
 \nonumber
-&amp;=&amp; -\sum_i \mathbb{E}_{q(z_i)} \log \frac{q(z_i)} {p(D_i|W_i)p(z_i)}- \mathbb{E}_{q(\alpha) } \log \frac{q(\alpha)}{p(\alpha)}\\&amp;=&amp;-\sum_i \textrm{ELBO}_i-\mathbb{E}_{q(\alpha)}\log \frac{q(\alpha)}{p(\alpha)}" />  
+&amp;=&amp; -\sum_i \mathbb{E}_{q(z_i)} \log \frac{q(z_i)} {p(D_i|W_i)p(z_i)}- \mathbb{E}_{q(\alpha) } \log \frac{q(\alpha)}{p(\alpha)}\\&amp;=&amp;-\sum_i \textrm{ELBO}_i-\mathbb{E}_{q(\alpha)}\log \frac{q(\alpha)}{p(\alpha)}" />
 
 The task-dependent part is <img align="center" src="https://i.upmath.me/svg/%0A-%5Csum_i%20%5Ctextrm%7BELBO%7D_i%0A" alt="-\sum_i \textrm{ELBO}_i" /> and the task-commom part is <img align="center" src="https://i.upmath.me/svg/%0A-%5Cmathbb%7BE%7D_%7Bq(%5Calpha)%7D%5Clog%20%5Cfrac%7Bq(%5Calpha)%7D%7Bp(%5Calpha)%7D%0A" alt="-\mathbb{E}_{q(\alpha)}\log \frac{q(\alpha)}{p(\alpha)}" />. The help information can be obtain by
 
     python main.py -h
 
 Some toy data are given in *testdata* folder. The format of input files should be the same as these toy examples.
+## Updated in 2022.09
+* Reconstruct the code
+* Discard edward and make the sampling process transparent
+* Add the code for generating data
+* Use Python 3.8 & torch
+* Optimize the model architecture, hyperparameters and training process. The model has better performance than the previous version.
+* Update scripts for making data/running experiments
+* Optimize the memory usage
+
+## Prepare data
+Set genome.fa path in globalconfig.py
+
+> bash script/preparejsonfile.sh # it might take a while
+
+## Run experiments
+Pretrain the Bayesian model:
+
+> bash script/run_pretrain.sh;
+
+Fine-tuning:
+
+> bash script/check_pretrain_res
 
 ## requirement
-Python 2.7.14
-
-tensorflow-gpu==1.4.0
-
-edward==1.3.5
-
-numpy==1.14.5
-
-scipy==1.1.0
-
-scikit-learn==0.20.0
-
-keras==2.1.3
-
-## Train model
-example:
-
-    bash python main.py -r testdata/train1 testdata/train2 -s ./Model
-
-Multiple training data can be used here. Each training data is in the json format.
-
-## Test model
-example:
-
-    python main.py -t testdata/test1 testdata/test2 -p ./Model/model.ckpt-0 -k 2
-
-In the testing mode, the number of tasks used in the training process must be specified, i.e. the value of k must be given. The order of tasks in the testdata must be the same as that in the traindata.
-
-The test result will be saved with a suffix of *MtBNN_test_out*
-
-## Fine-tuning and validation on SNP data
-example:
-
-    python main.py -t testdata/snp_train testdata/snp_test -n True -a 1 -k 2 -p ./Model/model.ckpt-0
-
-    if a==k, MtBNN_ALL will be calculated
-    if a<k, MtBNN_SINGLE will be calculated with a-th task-specific feature
-    if a==k+1, MtBNN_GENERIC will be calculted
-
-a==k is suggested. In the snp mode, the number of tasks and the index of task must be specified, i.e. the value of k (the number of tasks used in the training process) and the value of a (the index of the task which the snp data is related to) are needed.
-
-The output will be saved with a suffix of *MtBNN_snp_out*
+Python==3.8
+torch==1.11.0
