@@ -54,6 +54,7 @@ def main():
 
         summary.fit(config.epoch_num)
         logger.info("Finish training, start eval ...")
+        config.model.load_state_dict(torch.load(os.path.join(config.save_path, "models", "model.ckpt-best")))
         writeFile(config.model.eval(validation_data), os.path.join(config.save_path, "valid_"))
         writeFile(config.model.eval(test_data), os.path.join(config.save_path, "test_"))
         return

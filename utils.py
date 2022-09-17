@@ -119,6 +119,7 @@ class GetSummaryStatisticsCallback():
         self.model_save_path = model_save_path
         self.ispretrain=ispretrain
         self.num_fold=num_fold
+        self.bestauc=-float("inf")
 
         if self.model_save_path is not None and not os.path.exists(self.model_save_path):
             os.mkdir(self.model_save_path)
@@ -193,7 +194,7 @@ class GetSummaryStatisticsCallback():
             Eval_Pred.extend(pred)
             Eval_Task.extend(task)
         logger.info("AUC is {} AUPRC is {}".format(roc_auc_score(Eval_GT, Eval_Pred), average_precision_score(Eval_GT, Eval_Pred)))
-        writeFile([Eval_GT, Eval_Pred, Eval_Task], self.model_save_path+"_"+int(self.model.usebayesian)+"_"+self.model.mutscoretype)
+        writeFile([Eval_GT, Eval_Pred, Eval_Task], self.model_save_path+"_"+str(int(self.model.usebayesian))+"_"+self.model.mutscoretype)
 
 
 
@@ -207,6 +208,7 @@ class GetSummaryStatisticsCallback():
         auc=roc_auc_score(GT, Pred)
         auprc=average_precision_score(GT, Pred)
         logger.info("The AUC is {} AUPRC is {} for Epoch {}".format(auc, auprc, epoch))
+        return auc
 
     def on_epoch_end(self, epoch, logs={}):
         # save model
@@ -216,7 +218,11 @@ class GetSummaryStatisticsCallback():
         # write logs
         logger.info("Epoch: {}".format(epoch))
         logger.info("Validation data:")
-        self._write_line(self.validation_data,  epoch)
+        auc=self._write_line(self.validation_data,  epoch)
+        if auc>self.bestauc:
+            if self.model_save_path is not None:
+                torch.save(self.model.state_dict(), os.path.join(self.model_save_path, "model.ckpt-best"))
+            self.bestauc=auc
 
         if not self.test_data is None:
             logger.info("Test data")
