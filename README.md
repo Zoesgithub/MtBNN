@@ -38,10 +38,15 @@ Pretrain the Bayesian model:
 
 > bash script/run_pretrain.sh;
 
+Eval with the pretrain model:
+
+> bash script/run_eval.sh
+
 Fine-tuning:
 
-> bash script/check_pretrain_res
+> bash script/run_ft.sh;
 
 ## requirement
 Python==3.8
+
 torch==1.11.0
