@@ -1,3 +1,4 @@
+from email.generator import Generator
 from loguru import logger
 import os
 import argparse
@@ -73,7 +74,7 @@ def main():
         summary = GetSummaryStatisticsCallback(
             config.model,
             None, None, test_data=None,
-            model_save_path=os.path.join(config.save_path, "models"),
+            model_save_path=os.path.join(config.save_path, config.trainjsonfile.split("/")[-1]),
             ispretrain=config.pretrain
         )
         summary.fine_tuning(config.epoch_num, mut_data, config.batch_size, config.load_path, num_fold=5)
@@ -81,6 +82,11 @@ def main():
         mut_data = DataLoader(MutGenerator(config.trainjsonfile, config.taskname, config.tasklist), batch_size=config.batch_size)
         config.model.load_state_dict(torch.load(config.load_path))
         writeFile(config.model.eval(mut_data, ismut=True), os.path.join(config.savepath, config.trainjsonfile.split("/")[-1]+"eval"))
+    elif config.state=="eval": ## eval seq
+        test_data=DataLoader(DataGenerator(taskList=config.tasklist, path=config.path, endfix="_test"), shuffle=False,
+                                     batch_size=config.batch_size, num_workers=0, drop_last=False)
+        config.model.load_state_dict(torch.load(config.load_path))
+        writeFile(config.model.eval(test_data), os.path.join(config.save_path, "test_"))
     else:
         assert False, "state must in [evmut, cv, ft, pretrain]"
 
