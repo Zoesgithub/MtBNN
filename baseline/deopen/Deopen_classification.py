@@ -25,6 +25,7 @@ class dataset(Dataset):
         return len(self.x)
 
     def __getitem__(self, index):
+        assert self.y[index]==0 or self.y[index]==1
         return [self.x[index], self.y[index]]
 
 #split the data into training set, testing set
@@ -55,38 +56,22 @@ class Model(nn.Module):
         kernel3 = 128
         self.net_21=nn.Sequential(
             nn.Conv2d(1, kernel1, (4, test_size1)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel1),
             nn.Conv2d(kernel1, kernel1, (1, test_size1)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel1),
             nn.Conv2d(kernel1, kernel1, (1, test_size1)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel1),
             nn.MaxPool2d((1, pool_size)),
             nn.Conv2d(kernel1, kernel2, (1, test_size2)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel2),
             nn.Conv2d(kernel2, kernel2, (1, test_size2)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel2),
             nn.Conv2d(kernel2, kernel2, (1, test_size2)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel2),
             nn.MaxPool2d((1, pool_size)),
             nn.Conv2d(kernel2, kernel3, (1, test_size3)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel3),
             nn.Conv2d(kernel3, kernel3,(1, test_size3)),
-            nn.ReLU(),
-            nn.BatchNorm2d(kernel3),
             nn.Conv2d(kernel3, kernel3,(1, test_size3)),
             nn.MaxPool2d((1, pool_size)),
             )
 
         self.net_v2=nn.Linear(4*1024, 128)
         self.linear_v1=nn.Linear(kernel3*4, 256)
-        self.outnet=nn.Sequential(nn.ReLU(),nn.Dropout(0.5), nn.Linear(128+256, 256), nn.ReLU(), nn.Linear(256, 2), nn.Softmax(-1))
+        self.outnet=nn.Sequential(nn.Dropout(0.5), nn.Linear(128+256, 256), nn.Linear(256, 2), nn.Softmax(-1))
         self.accscore=[]
 
     def forward(self, x):
@@ -119,15 +104,16 @@ class trainframe():
         for d in data:
             x, y=d
             with torch.no_grad():
-                p=model.forward(x.cuda()).detach().argmax(-1)
+                p=model.forward(x.cuda()).detach()
             assert len(y.shape)==1
             GT.extend(y.cpu().numpy().tolist())
-            Pred.extend(p.cpu().numpy().tolist())
-        return GT, Pred, sum([int(a==b) for a,b in zip(GT, Pred)])/len(GT)
+            Pred.extend(p.cpu().numpy()[:, 1].tolist())
+        return GT, Pred, sum([int(a==int(b>0.5)) for a,b in zip(GT, Pred)])/len(GT)
 
     def train_epochs(self, train, val, num_epochs):
         for epoch in range(num_epochs):
             for idx, d in enumerate(train):
+                self.optimizer.zero_grad()
                 self.net.train()
                 x, y=d
                 p=self.net(x.cuda())
@@ -142,6 +128,7 @@ class trainframe():
             if acc>self.ACC:
                 self.ACC=acc
                 self.bestmodel=copy.deepcopy(self.net)
+                logger.info("save best model in epoch {} with acc {}".format(epoch, acc))
         return self.bestmodel
 
 
