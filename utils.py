@@ -165,7 +165,10 @@ class GetSummaryStatisticsCallback():
         Eval_GT=[]
         Eval_Pred=[]
         Eval_Task=[]
+        #Numsteps=500
+
         for nf in range(num_fold):
+            Numiters=0
             self.model.load_state_dict(torch.load(load_path))
             evalidx=split_idxs[nf]
             trainidx=[]
@@ -174,18 +177,21 @@ class GetSummaryStatisticsCallback():
                     trainidx.extend(split_idxs[i])
             evaldata=DataLoader(CrossvalidationGenerator(mutdata, evalidx), batch_size=batchsize, shuffle=False)
             traindata=DataLoader(CrossvalidationGenerator(mutdata, trainidx), batch_size=batchsize, shuffle=True)
-            logger.info("Cross validation {} train size {} eval size {}".format(nf, len(trainidx), len(evalidx)))
-            for _ in range(num_epoch):
+            logger.info("Cross validation {} train size {} eval size {}".format(nf, len(traindata), len(evaldata)))
+
+            for _ in range(max(num_epoch, 150//len(traindata))):
                 for d in traindata:
                     loss=self.model.finetune_onestep(d)
                     logout = "|".join([k+":"+str('%.3g' % loss[k]) for k in loss])
                     logger.info(logout)
+                    Numiters+=1
+
             gt, pred, task=self.model.eval(evaldata, ismut=True)
             Eval_GT.extend(gt)
             Eval_Pred.extend(pred)
             Eval_Task.extend(task)
         logger.info("AUC is {} AUPRC is {}".format(roc_auc_score(Eval_GT, Eval_Pred), average_precision_score(Eval_GT, Eval_Pred)))
-        writeFile([Eval_GT, Eval_Pred, Eval_Task], self.model_save_path+str(len(mutdata)))
+        writeFile([Eval_GT, Eval_Pred, Eval_Task], self.model_save_path+str(len(mutdata))+self.model.mutscoretype)
 
 
 
