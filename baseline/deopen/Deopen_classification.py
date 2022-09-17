@@ -161,7 +161,8 @@ if  __name__ == "__main__" :
     X_train, y_train = data_split(args.input)
     x_val, y_val=data_split(args.val)
     model=trainframe()
-    bestmodel=model.train_epochs(DataLoader(dataset(X_train, y_train), batch_size=32, shuffle=True), DataLoader(dataset(x_val, y_val), batch_size=64), 55)
+    numsteps=2000//(len(X_train)//32)
+    bestmodel=model.train_epochs(DataLoader(dataset(X_train, y_train), batch_size=32, shuffle=True), DataLoader(dataset(x_val, y_val), batch_size=64), max(55, numsteps))
 
     if args.testfile!='':
         for i,j in zip(args.testfile, args.testoutfile):
