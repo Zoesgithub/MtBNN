@@ -32,5 +32,5 @@ python main.py -c tasks/HepG2/cv_eqtl_generic_dnn
 python main.py -c tasks/HepG2/cv_eqtl_all_dnn
 
 ## tcell
-python main.py -c tasks/TCell/cv_atacqtl_generic
-python main.py -c tasks/TCell/cv_atacqtl_all
+python main.py -c tasks/TCell/cv_atacqtl_generic_dnn
+python main.py -c tasks/TCell/cv_atacqtl_all_dnn
