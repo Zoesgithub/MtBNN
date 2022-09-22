@@ -315,6 +315,7 @@ class Model():
                             pred=sum([self.net.forward(x.cuda().long(), torch.cat([task.cuda().long(),task.cuda().long()], 0), predmut=True, usegate=True) for _ in range(numrep)])/numrep
                         else:
                             pred=self.net.forward(x.cuda().long(), torch.cat([task.cuda().long(),task.cuda().long()], 0), predmut=True, usegate=True)
+
                 Gt.extend(y.cpu().numpy().tolist())
                 Pred.extend(pred.cpu().numpy().tolist())
                 Task.extend(taskname)

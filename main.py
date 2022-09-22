@@ -78,7 +78,7 @@ def main():
             model_save_path=os.path.join(config.save_path, config.trainjsonfile.split("/")[-1]),
             ispretrain=config.pretrain
         )
-        summary.fine_tuning(config.epoch_num, mut_data, config.batch_size, config.load_path, num_fold=5)
+        summary.fine_tuning(config.epoch_num, mut_data, config.batch_size, config.load_path, num_fold=5, prefix=config.trainjsonfile.split("/")[-1])
     elif config.state=="evmut": ## eval mutations
         mut_data = DataLoader(MutGenerator(config.trainjsonfile, config.taskname, config.tasklist), batch_size=config.batch_size)
         config.model.load_state_dict(torch.load(config.load_path))

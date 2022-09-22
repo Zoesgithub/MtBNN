@@ -157,7 +157,7 @@ class GetSummaryStatisticsCallback():
         torch.save(self.model.state_dict(), os.path.join(self.model_save_path, "model.ckpt-ft"))
         logger.info("finish finetuing")
 
-    def cross_validation(self, num_epoch, mutdata, batchsize, load_path, num_fold=5):
+    def cross_validation(self, num_epoch, mutdata, batchsize, load_path, num_fold=5, prefix=""):
         mutdatasize=len(mutdata)
         Idxs=list(range(mutdatasize))
         random.seed(321)
@@ -194,7 +194,7 @@ class GetSummaryStatisticsCallback():
             Eval_Pred.extend(pred)
             Eval_Task.extend(task)
         logger.info("AUC is {} AUPRC is {}".format(roc_auc_score(Eval_GT, Eval_Pred), average_precision_score(Eval_GT, Eval_Pred)))
-        writeFile([Eval_GT, Eval_Pred, Eval_Task], self.model_save_path+"_"+str(int(self.model.usebayesian))+"_"+self.model.mutscoretype)
+        writeFile([Eval_GT, Eval_Pred, Eval_Task], prefix+"_"+self.model_save_path+"_"+str(int(self.model.usebayesian))+"_"+self.model.mutscoretype)
 
 
 
@@ -234,6 +234,9 @@ def writeFile(Pred, Path):
     taskfiles={f:open(Path+f, "w") for f in taskset}
 
     for a,b,t in zip(GT, Pred, Task):
-        taskfiles[t].writelines("{}_{}\n".format(a,b))
+        if isinstance(b, list):
+            assert len(b)==1
+            b=b[0]
+        taskfiles[t].writelines("{}\t{}\n".format(a,b))
     for f in taskfiles:
         taskfiles[f].close()
