@@ -194,7 +194,8 @@ class GetSummaryStatisticsCallback():
             Eval_Pred.extend(pred)
             Eval_Task.extend(task)
         logger.info("AUC is {} AUPRC is {}".format(roc_auc_score(Eval_GT, Eval_Pred), average_precision_score(Eval_GT, Eval_Pred)))
-        writeFile([Eval_GT, Eval_Pred, Eval_Task], prefix+"_"+self.model_save_path+"_"+str(int(self.model.usebayesian))+"_"+self.model.mutscoretype)
+        logger.info("Saving file to {}".format(self.model_save_path+prefix+"_"+str(int(self.model.usebayesian))+"_"+self.model.mutscoretype))
+        writeFile([Eval_GT, Eval_Pred, Eval_Task], self.model_save_path+prefix+"_"+str(int(self.model.usebayesian))+"_"+self.model.mutscoretype)
 
 
 
