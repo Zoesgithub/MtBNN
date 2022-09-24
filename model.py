@@ -295,8 +295,16 @@ class Model():
                 if not ismut:
                     if self.usebayesian:
                         pred=sum([self.net.forward(x.cuda().long(), task.cuda().long(), predmut=False, usegate=True) for _ in range(5)])/5.
+                        if "mutx" in d:
+                            mutx=d["mutx"]
+                            mutpred=sum([self.net.forward(mutx.cuda().long(), task.cuda().long(), predmut=False, usegate=True) for _ in range(5)])/5.
+                            pred=mutpred-pred
                     else:
                         pred=self.net.forward(x.cuda().long(), task.cuda().long(), predmut=False, usegate=True)
+                        if "mutx" in d:
+                            mutx=d["mutx"]
+                            mutpred=self.net.forward(mutx.cuda().long(), task.cuda().long(), predmut=False, usegate=True)
+                            pred=mutpred-pred
                 else:
                     mutx=d["mutx"]
                     x=torch.cat([x, mutx], 0)
