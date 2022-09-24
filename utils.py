@@ -149,7 +149,7 @@ class GetSummaryStatisticsCallback():
         self.model.load_state_dict(torch.load(load_path))
         traindata=DataLoader(mutdata, batch_size=batchsize, shuffle=True)
         logger.info("finetuning with train size {}".format(len(traindata)))
-        for _ in range(num_epoch):
+        for _ in range(max(num_epoch, 150//len(traindata))):
             for d in traindata:
                 loss=self.model.finetune_onestep(d)
                 logout = "|".join([k+":"+str('%.3g' % loss[k]) for k in loss])
