@@ -1,4 +1,3 @@
-from email.generator import Generator
 from loguru import logger
 import os
 import argparse
@@ -80,9 +79,12 @@ def main():
         )
         summary.fine_tuning(config.epoch_num, mut_data, config.batch_size, config.load_path)
     elif config.state=="evmut": ## eval mutations
-        mut_data = DataLoader(MutGenerator(config.trainjsonfile, config.taskname, config.tasklist), batch_size=config.batch_size)
-        config.model.load_state_dict(torch.load(config.load_path))
-        writeFile(config.model.eval(mut_data, ismut=True), os.path.join(config.savepath, config.trainjsonfile.split("/")[-1]+"eval"))
+        if not isinstance(config.trainjsonfile, list):
+            config.trainjsonfile=[config.trainjsonfile]
+        for data in config.trainjsonfile:
+            mut_data = DataLoader(MutGenerator(data, config.taskname, config.tasklist), batch_size=config.batch_size)
+            config.model.load_state_dict(torch.load(config.load_path))
+            writeFile(config.model.eval(mut_data, ismut=True), os.path.join(config.savepath, config.trainjsonfile.split("/")[-1]+"eval"))
     elif config.state=="eval": ## eval seq
         test_data=DataLoader(DataGenerator(taskList=config.tasklist, path=config.path, endfix="_test"), shuffle=False,
                                      batch_size=config.batch_size, num_workers=0, drop_last=False)
