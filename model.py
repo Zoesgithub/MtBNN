@@ -315,17 +315,19 @@ class Model():
                             pred=sum([self.net.forward(x.cuda().long(), torch.cat([task.cuda().long(),task.cuda().long()], 0), predmut=True, usegate=True) for _ in range(numrep)])/numrep
                         else:
                             pred=self.net.forward(x.cuda().long(), torch.cat([task.cuda().long(),task.cuda().long()], 0), predmut=True, usegate=True)
-
-                Gt.extend(y.cpu().numpy().tolist())
+                if isinstance(y, list):
+                    Gt.extend(y)
+                else:
+                    Gt.extend(y.cpu().numpy().tolist())
                 Pred.extend(pred.cpu().numpy().tolist())
                 Task.extend(taskname)
-
-        auc_score=roc_auc_score(Gt, Pred)
-        auprc_score=average_precision_score(Gt, Pred)
-        logger.info("The auc score is {} auprc is {} for length of {}".format(auc_score, auprc_score, len(Gt)))
-        tasksets=set(Task)
-        for t in tasksets:
-            tgt=[x for x,y in zip(Gt, Task) if y==t]
-            tpred=[x for x,y in zip(Pred, Task) if y==t]
-            logger.info("For {} the auc score is {} auprc is {} for length of {}".format(parse_name(t), roc_auc_score(tgt, tpred), average_precision_score(tgt, tpred), len(tgt)))
+        if isinstance(Gt[0], int):
+            auc_score=roc_auc_score(Gt, Pred)
+            auprc_score=average_precision_score(Gt, Pred)
+            logger.info("The auc score is {} auprc is {} for length of {}".format(auc_score, auprc_score, len(Gt)))
+            tasksets=set(Task)
+            for t in tasksets:
+                tgt=[x for x,y in zip(Gt, Task) if y==t]
+                tpred=[x for x,y in zip(Pred, Task) if y==t]
+                logger.info("For {} the auc score is {} auprc is {} for length of {}".format(parse_name(t), roc_auc_score(tgt, tpred), average_precision_score(tgt, tpred), len(tgt)))
         return Gt, Pred, Task
