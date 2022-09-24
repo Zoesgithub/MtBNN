@@ -76,7 +76,7 @@ def main():
             config.model,
             None, None, test_data=None,
             model_save_path=os.path.join(config.save_path, config.trainjsonfile.split("/")[-1]),
-            ispretrain=config.pretrain
+            ispretrain=False
         )
         summary.fine_tuning(config.epoch_num, mut_data, config.batch_size, config.load_path)
     elif config.state=="evmut": ## eval mutations
