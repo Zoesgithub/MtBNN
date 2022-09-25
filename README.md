@@ -42,9 +42,9 @@ Eval with the pretrain model:
 
 > bash script/run_eval.sh
 
-Fine-tuning:
+Five-fold cross-validation:
 
-> bash script/run_ft.sh;
+> bash script/run_cv.sh;
 
 ## requirement
 Python==3.8
