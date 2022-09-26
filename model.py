@@ -135,7 +135,7 @@ class bmodel(nn.Module):
                                   CNN(512, 256, 16), nn.ReLU(),nn.BatchNorm1d(256),
                                   CNN(256, 256, 16, stride=3),  nn.ReLU(), nn.BatchNorm1d(256),
                                   CNN(256, 256, 32), nn.ReLU(),nn.BatchNorm1d(256),
-                                  CNN(256, 256, 32), nn.ReLU(), nn.BatchNorm1d(256), nn.BatchNorm1d(256))
+                                  CNN(256, 256, 32), nn.ReLU(), nn.BatchNorm1d(256))
         self.forwardgru=rnn(256*2, 256, None)
         self.backwardgru=rnn(256*2, 256, None)
         self.outbn=nn.BatchNorm1d(256*2)
