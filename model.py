@@ -76,6 +76,10 @@ class BCNN(nn.Module):
         self.padding=padding
         self.sigmoid=nn.Sigmoid()
         self.usebayes=usebayes
+        self.inc=inc
+        self.outc=outc
+        self.relu=nn.ReLU()
+        self.norm=nn.InstanceNorm1d(outc)
 
     def forward(self, x):
         if self.usebayes:
@@ -86,7 +90,10 @@ class BCNN(nn.Module):
         else:
             w=self.w_mean
             b=self.b_mean
-        return nn.functional.conv1d(x, w, b, stride=self.stride, padding=self.padding)
+        if self.stride==1 and self.inc==self.outc:
+            return self.norm(self.relu(nn.functional.conv1d(x, w, b, stride=self.stride, padding=self.padding)))+x
+        else:
+            return self.norm(self.relu(nn.functional.conv1d(x, w, b, stride=self.stride, padding=self.padding)))
 
 class BFC(nn.Module):
     def __init__(self, ins, outs, usebayes=True) -> None: # defauls as Normal distribution
@@ -130,12 +137,12 @@ class bmodel(nn.Module):
             self.task_z_logstd=nn.Embedding(numtask+1, embedsize, _weight=torch.ones([numtask+1,embedsize]))
         self.znet=nn.Sequential(FC(embedsize, 256), nn.ReLU(), FC(256, 256), nn.ReLU(), FC(256, 256*2), nn.Sigmoid())
         self.cnnnet=nn.Sequential(
-                                    CNN(100, 256, 10), nn.ReLU(),nn.InstanceNorm1d(256),
-                                    CNN(256, 256, 16), nn.ReLU(),nn.InstanceNorm1d(256),
-                                  CNN(256, 256, 16), nn.ReLU(),nn.InstanceNorm1d(256),
-                                  CNN(256, 256, 16), nn.ReLU(), nn.InstanceNorm1d(256),
-                                  CNN(256, 256, 32), nn.ReLU(),nn.InstanceNorm1d(256),
-                                  CNN(256, 256, 32, stride=30), nn.ReLU(), nn.InstanceNorm1d(256))
+                                    CNN(100, 256, 11, padding=5),
+                                    CNN(256, 256, 17, padding=8),
+                                  CNN(256, 256, 17, padding=8),
+                                  CNN(256, 256, 17, padding=8),
+                                  CNN(256, 256, 33, padding=16),
+                                  CNN(256, 256, 33, stride=16), )
         self.forwardgru=rnn(256*2, 256, None)
         self.backwardgru=rnn(256*2, 256, None)
         self.outbn=nn.InstanceNorm1d(256*2)
