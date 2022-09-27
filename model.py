@@ -130,15 +130,15 @@ class bmodel(nn.Module):
             self.task_z_logstd=nn.Embedding(numtask+1, embedsize, _weight=torch.ones([numtask+1,embedsize]))
         self.znet=nn.Sequential(FC(embedsize, 256), nn.ReLU(), FC(256, 256), nn.ReLU(), FC(256, 256*2), nn.Sigmoid())
         self.cnnnet=nn.Sequential(
-                                    CNN(100, 512, 10), nn.LayerNorm( (512, 991)), nn.ReLU(),
-                                    CNN(512, 512, 16),nn.LayerNorm((512, 976)), nn.ReLU(),
-                                  CNN(512, 256, 16, stride=5), nn.LayerNorm((256, 193)),nn.ReLU(),
-                                  CNN(256, 256, 16), nn.LayerNorm((256, 178)), nn.ReLU(),
-                                  CNN(256, 256, 32), nn.LayerNorm((256, 147)), nn.ReLU(),
-                                  CNN(256, 256, 32, stride=7), nn.LayerNorm((256, 17)), nn.ReLU())
+                                    CNN(100, 256, 10), nn.ReLU(),nn.InstanceNorm1d(256),
+                                    CNN(256, 256, 16), nn.ReLU(),nn.InstanceNorm1d(256),
+                                  CNN(256, 256, 16), nn.ReLU(),nn.InstanceNorm1d(256),
+                                  CNN(256, 256, 16), nn.ReLU(), nn.InstanceNorm1d(256),
+                                  CNN(256, 256, 32), nn.ReLU(),nn.InstanceNorm1d(256),
+                                  CNN(256, 256, 32, stride=30), nn.ReLU(), nn.InstanceNorm1d(256))
         self.forwardgru=rnn(256*2, 256, None)
         self.backwardgru=rnn(256*2, 256, None)
-        self.outbn=nn.LayerNorm((256*2))
+        self.outbn=nn.InstanceNorm1d(256*2)
         self.anet=nn.Sequential(FC(256*2, 128), nn.ReLU(), FC(128, 256*2), nn.Softmax(1))
 
         self.prednet=nn.Sequential(FC(256*2, 256), nn.ReLU(), FC(256, 1))
