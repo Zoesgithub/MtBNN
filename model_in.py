@@ -79,7 +79,7 @@ class BCNN(nn.Module):
         self.inc=inc
         self.outc=outc
         self.relu=nn.ReLU()
-        self.norm=nn.BatchNorm1d(outc)
+        self.norm=nn.InstanceNorm1d(outc)
 
     def forward(self, x):
         if self.usebayes:
@@ -149,7 +149,7 @@ class bmodel(nn.Module):
                                   )
         self.forwardgru=rnn(256*2, 256, None)
         self.backwardgru=rnn(256*2, 256, None)
-        self.outbn=nn.BatchNorm1d(256*2)
+        self.outbn=nn.InstanceNorm1d(256*2)
         self.anet=nn.Sequential(FC(256*2, 128), nn.ReLU(), FC(128, 256*2), nn.Softmax(1))
 
         self.prednet=nn.Sequential(FC(256*2, 256), nn.ReLU(), FC(256, 1))
