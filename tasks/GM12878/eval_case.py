@@ -18,6 +18,6 @@ class config:
     epoch_num = 5
     num_workers = 5
     state="evmut"
-    trainjsonfile=[os.path.join("data/CaseStudy/Disease/", x) for x in os.listdir("data/CaseStudy/Disease/") if x.endswith("json")]
+    trainjsonfile=[os.path.join("data/CaseStudy/Disease/", x) for x in os.listdir("data/CaseStudy/Disease/") if x.endswith("json")]+["data/CaseStudy/Enhancer_gm12878/snps.csvjson"]+["data/CaseStudy/GWAS/TOTAL_SNP.json"]
     taskname="wgEncodeOpenChromDnaseGm12878Pk.narrowPeak"
     load_path=os.path.join(savepath,  "model.ckpt-ft")
