@@ -5,7 +5,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from utils import parse_name
 from functools import partial
 
-Scale=0.01
+Scale=0.001
 class BRNN(nn.Module):
     def __init__(self, inputsize, num_units, activation=nn.ReLU(), usebayes=True) -> None: # defauls as Normal distribution
         super().__init__()
