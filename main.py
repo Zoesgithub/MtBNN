@@ -26,6 +26,7 @@ def main():
     random.seed(1+config.seed)
     np.random.seed(1+config.seed)
     torch.random.manual_seed(1+config.seed)
+    torch.backends.cudnn.deterministic = True
     print("finish set env")
 
     if config.state=="pretrain":

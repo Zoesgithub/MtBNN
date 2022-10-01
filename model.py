@@ -254,6 +254,7 @@ class Model():
 
     def load_state_dict(self, state_dict):
         self.net.load_state_dict(state_dict)
+        logger.info("setting pretrain values")
         self.pretrainedstatedict=state_dict
 
     def pretrain_onestep(self, d):
@@ -288,7 +289,7 @@ class Model():
         loss=self.loss(pred, y.float().cuda())
         if self.usebayesian:
             bloss=self.get_param_loss(len(y))
-            tloss=loss+bloss
+            tloss=loss+10*bloss
         else:
             tloss=loss
             bloss=0
