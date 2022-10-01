@@ -5,7 +5,7 @@ import os
 savepath = "tasks/GM12878/bnn_pretrain_scale3/"
 with open("script/GM12878_files", "r") as f:
     Numtask=len(f.readlines())
-Seed=49
+Seed=497
 torch.manual_seed(Seed)
 class config:
     log_path = savepath + "ft_dsqtl_generic.log"
